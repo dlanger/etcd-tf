@@ -3,6 +3,11 @@ resource "aws_launch_configuration" "node" {
   image_id      = "${var.ami}"
   instance_type = "${var.instance_type}"
 
+  security_groups = [
+    "${aws_security_group.from_network.id}",
+    "${aws_security_group.from_world.id}",
+  ]
+
   associate_public_ip_address = "true" # TODO: remove me
 
   lifecycle {
@@ -30,4 +35,28 @@ resource "aws_autoscaling_group" "nodes" {
       propagate_at_launch = "true"
     },
   ]
+}
+
+resource "aws_security_group" "from_network" {
+  name   = "etcd_from_network"
+  vpc_id = "${var.vpc_id}"
+
+  ingress {
+    from_port = 0
+    to_port   = 0
+    protocol  = "-1"
+    self      = "true"
+  }
+}
+
+resource "aws_security_group" "from_world" {
+  name   = "etcd_from_world"
+  vpc_id = "${var.vpc_id}"
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
