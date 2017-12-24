@@ -1,4 +1,3 @@
-
 resource "aws_launch_configuration" "node" {
   name_prefix   = "etcd-node-config-"
   image_id      = "${var.ami}"
@@ -45,10 +44,10 @@ resource "aws_security_group" "from_network" {
   vpc_id = "${var.vpc_id}"
 
   ingress {
-    from_port = 0
-    to_port   = 0
-    protocol  = "-1"
-    self      = "true"
+    from_port   = 0                       # TODO: what port(s) actually needed
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["${var.network_cidr}"]
   }
 }
 

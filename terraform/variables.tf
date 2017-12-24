@@ -32,3 +32,8 @@ variable "instance_type" {
   type    = "string"
   default = "m3.medium"
 }
+
+variable "network_cidr" {
+  type        = "string"
+  description = "cidr of the private network that can access etcd"
+}
