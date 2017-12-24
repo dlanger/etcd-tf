@@ -8,6 +8,7 @@ resource "aws_launch_configuration" "node" {
   security_groups = [
     "${aws_security_group.from_network.id}",
     "${aws_security_group.from_world.id}",
+    "${aws_security_group.from_peers.id}",
   ]
 
   associate_public_ip_address = "true" # TODO: remove me
@@ -44,10 +45,22 @@ resource "aws_security_group" "from_network" {
   vpc_id = "${var.vpc_id}"
 
   ingress {
-    from_port   = 0                       # TODO: what port(s) actually needed
-    to_port     = 0
-    protocol    = "-1"
+    from_port   = 2380
+    to_port     = 2380
+    protocol    = "tcp"
     cidr_blocks = ["${var.network_cidr}"]
+  }
+}
+
+resource "aws_security_group" "from_peers" {
+  name   = "etcd_from_peers"
+  vpc_id = "${var.vpc_id}"
+
+  ingress {
+    from_port = 2379
+    to_port   = 2379
+    protocol  = "tcp"
+    self      = "true"
   }
 }
 
