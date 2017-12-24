@@ -8,7 +8,8 @@ variable "subnet_ids" {
 
 variable "cluster_size" {
   type    = "string"
-  default = "3"
+  description = "number of nodes in cluster; defaults to one per subnet_id"
+  default = ""
 }
 
 variable "tag_name" {

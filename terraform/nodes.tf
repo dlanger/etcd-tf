@@ -18,8 +18,8 @@ resource "aws_launch_configuration" "node" {
 
 resource "aws_autoscaling_group" "nodes" {
   name_prefix          = "etcd-nodes-"
-  max_size             = "${var.cluster_size + 1}"
-  min_size             = "${var.cluster_size}"
+  max_size             = "${coalesce(var.cluster_size, length(var.subnet_ids)) + 1}"
+  min_size             = "${coalesce(var.cluster_size, length(var.subnet_ids))}"
   vpc_zone_identifier  = "${var.subnet_ids}"
   default_cooldown     = "60"
   launch_configuration = "${aws_launch_configuration.node.id}"
