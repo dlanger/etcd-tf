@@ -42,6 +42,14 @@ resource "aws_security_group" "etcd_nodes" {
   name   = "etcd-nodes"
   vpc_id = "${var.vpc_id}"
 
+  # outbound to the internet
+  egress {
+    from_port   = "0"
+    to_port     = "0"
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   # client connections
   ingress {
     from_port   = 2380
