@@ -6,9 +6,7 @@ resource "aws_launch_configuration" "node" {
   user_data     = "${data.ignition_config.init.rendered}"
 
   security_groups = [
-    "${aws_security_group.from_network.id}",
-    "${aws_security_group.from_world.id}",
-    "${aws_security_group.from_peers.id}",
+    "${aws_security_group.etcd_nodes.id}",
   ]
 
   associate_public_ip_address = "true" # TODO: remove me
@@ -30,7 +28,7 @@ resource "aws_autoscaling_group" "nodes" {
     {
       key                 = "${var.tag_name}"
       value               = "etcd"
-      propagate_at_launch = true
+      propagate_at_launch = "true"
     },
     {
       key                 = "Name"
@@ -40,38 +38,36 @@ resource "aws_autoscaling_group" "nodes" {
   ]
 }
 
-resource "aws_security_group" "from_network" {
-  name   = "etcd_from_network"
+resource "aws_security_group" "etcd_nodes" {
+  name   = "etcd-nodes"
   vpc_id = "${var.vpc_id}"
 
+  # client connections
   ingress {
     from_port   = 2380
     to_port     = 2380
     protocol    = "tcp"
     cidr_blocks = ["${var.network_cidr}"]
   }
-}
 
-resource "aws_security_group" "from_peers" {
-  name   = "etcd_from_peers"
-  vpc_id = "${var.vpc_id}"
-
+  # intra-node connections
   ingress {
     from_port = 2379
     to_port   = 2379
     protocol  = "tcp"
     self      = "true"
   }
-}
 
-resource "aws_security_group" "from_world" {
-  name   = "etcd_from_world"
-  vpc_id = "${var.vpc_id}"
-
+  # ssh'ing in from outside
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"] # TODO: refine this
   }
+
+  tags = "${map(
+    var.tag_name, "etcd",
+    "Name", "etcd-nodes",
+  )}"
 }
