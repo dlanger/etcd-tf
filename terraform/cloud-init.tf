@@ -8,7 +8,7 @@ data "ignition_systemd_unit" "etcd" {
   name = "etcd-member.service"
 
   dropin {
-    name    = "20-clct-etcd-member.conf"
+    name    = "20-etcd-member.conf"
     content = "${data.template_file.etcd_unit.rendered}"
   }
 }

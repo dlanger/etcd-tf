@@ -13,8 +13,8 @@ Environment="ETCD_ADVERTISE_CLIENT_URLS=http://0.0.0.0:2379"
 Environment="ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379"
 Environment="ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380"
 Environment="ETCD_STRICT_RECONFIG_CHECK=true"
-Environment="ETCD_DISCOVERY_SRV="
-Environment="ETCD_NAME=$${COREOS_EC2_INSTANCE_ID}-$${COREOS_EC2_AVAILABILITY_ZONE}"
+#Environment="ETCD_DISCOVERY_SRV="
 
 ExecStart=
-ExecStart=/usr/lib/coreos/etcd-wrapper $ETCD_OPTS
+ExecStart=/usr/bin/env ETCD_NAME=$${COREOS_EC2_AVAILABILITY_ZONE}--$${COREOS_EC2_INSTANCE_ID} \
+			/usr/lib/coreos/etcd-wrapper $ETCD_OPTS
