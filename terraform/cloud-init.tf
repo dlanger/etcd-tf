@@ -1,14 +1,24 @@
 data "ignition_config" "init" {
-    systemd = [
-        "${data.ignition_systemd_unit.etcd.id}",
-    ]
+  systemd = [
+    "${data.ignition_systemd_unit.etcd.id}",
+  ]
 }
 
 data "ignition_systemd_unit" "etcd" {
-    name = "etcd.service"
-    content = "${file("cloud-init/hello-world.unit")}"
+  name = "etcd-member.service"
+
+  dropin {
+    name    = "20-clct-etcd-member.conf"
+    content = "${data.template_file.etcd_unit.rendered}"
+  }
 }
 
-output "cloud-init" {
-  value = "${data.ignition_config.init.rendered}"
+data "template_file" "etcd_unit" {
+  template = "${file("cloud-init/etcd.unit")}"
+
+  vars {
+    cluster_name          = "${var.etcd_cluster_name}"
+    peer_name             = "WIP"
+    discovery_domain_name = "WIP"
+  }
 }

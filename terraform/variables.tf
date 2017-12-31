@@ -37,3 +37,7 @@ variable "network_cidr" {
   type        = "string"
   description = "cidr of the private network that can access etcd"
 }
+
+variable "etcd_cluster_name" {
+  type = "string"
+}
