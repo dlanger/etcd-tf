@@ -17,8 +17,6 @@ data "template_file" "etcd_unit" {
   template = "${file("cloud-init/etcd.unit")}"
 
   vars {
-    cluster_name          = "${var.etcd_cluster_name}"
-    peer_name             = "WIP"
-    discovery_domain_name = "WIP"
+    cluster_name = "${var.etcd_cluster_name}"
   }
 }
