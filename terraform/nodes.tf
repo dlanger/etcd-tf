@@ -1,9 +1,10 @@
 resource "aws_launch_configuration" "node" {
-  name_prefix   = "etcd-node-config-"
-  image_id      = "${var.ami}"
-  instance_type = "${var.instance_type}"
-  key_name      = "${var.key_name}"
-  user_data     = "${data.ignition_config.init.rendered}"
+  name_prefix          = "etcd-node-config-"
+  image_id             = "${var.ami}"
+  instance_type        = "${var.instance_type}"
+  key_name             = "${var.key_name}"
+  user_data            = "${data.ignition_config.init.rendered}"
+  iam_instance_profile = "${var.etcd_node_role_arn}"
 
   security_groups = [
     "${aws_security_group.etcd_nodes.id}",
