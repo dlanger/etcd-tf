@@ -2,6 +2,10 @@ data "ignition_config" "init" {
   systemd = [
     "${data.ignition_systemd_unit.etcd.id}",
   ]
+
+  files = [
+    "${data.ignition_file.etcd_bootstrap.id}",
+  ]
 }
 
 data "ignition_systemd_unit" "etcd" {
@@ -18,5 +22,15 @@ data "template_file" "etcd_unit" {
 
   vars {
     cluster_name = "${var.etcd_cluster_name}"
+  }
+}
+
+data "ignition_file" "etcd_bootstrap" {
+  filesystem = "root"
+  path       = "/opt/etcd-bootstrap"
+  mode       = "365"                 # Decimal of 0555
+
+  content {
+    content = "${file("cloud-init/etcd-bootstrap")}"
   }
 }

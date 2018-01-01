@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+readonly curl="curl -s"
+readonly jq="jq -r"
+
+readonly AWSCLI_CONTAINER="xueshanf/awscli"
+readonly VARS_FILE_PATH="/tmp/etcd-vars"
+readonly REGION=${COREOS_EC2_REGION}
+readonly AVAILABILITY_ZONE=${COREOS_EC2_AVAILABILITY_ZONE}
+readonly INSTANCE_ID=${COREOS_EC2_INSTANCE_ID}
+readonly PRIVATE_IP=${COREOS_EC2_IPV4_LOCAL}
+
+readonly awscli="docker run --rm -e AWS_DEFAULT_REGION=${REGION} ${AWSCLI_CONTAINER} aws"
+
+if [[ -e "${VARS_FILE_PATH}" ]]; then
+	echo "etcd-vars file already exists at ${VARS_FILE_PATH}, exiting"
+	exit 1
+fi
+
+touch "${VARS_FILE_PATH}"
+
+echo "pulling awscli container"
+docker pull "${AWSCLI_CONTAINER}"
+
+readonly ASG_NAME=$(${awscli} autoscaling describe-auto-scaling-instances --instance-ids="${INSTANCE_ID}" | jq -r '.AutoScalingInstances[0].AutoScalingGroupName')
+
+readonly asg_state=$(${awscli} autoscaling describe-auto-scaling-groups --auto-scaling-group-names="${ASG_NAME}")
+readonly other_health_instances=$(echo "${asg_state}" | \
+	${jq} ".AutoScalingGroups[0].Instances[] | select(.HealthStatus == \"Healthy\" and .InstanceId !=\"${INSTANCE_ID}\") | .InstanceId")
+
+if [[ "${other_health_instances}" == "" ]]; then
+	echo "no other ec2-healthy instances found - starting new cluster"
+
+	echo "ETCD_INITIAL_CLUSTER_STATE=new" >> "${VARS_FILE_PATH}"
+	echo "ETCD_INITIAL_CLUSTER_TOKEN=etcd--$(uuidgen)" >> "${VARS_FILE_PATH}"
+	echo "ETCD_INITIAL_ADVERTISE_PEER_URLS=http://${PRIVATE_IP}:2380" >> "${VARS_FILE_PATH}"
+	
+	echo "ETCD_ADVERTISE_CLIENT_URLS=http://${PRIVATE_IP}:2379" >> "${VARS_FILE_PATH}"
+	echo "ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379" >> "${VARS_FILE_PATH}"
+	echo "ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380" >> "${VARS_FILE_PATH}"
+
+else
+	echo "other ec2-healthy instances found - joining cluster"
+fi
+
+echo "ETCD_STRICT_RECONFIG_CHECK=true" >> "${VARS_FILE_PATH}"
+echo "ETCD_NAME=${AVAILABILITY_ZONE}--${INSTANCE_ID}" >> "${VARS_FILE_PATH}"
