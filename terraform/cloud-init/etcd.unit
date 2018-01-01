@@ -1,6 +1,6 @@
 [Unit]
-Requires=coreos-metadata.service 
-After=coreos-metadata.service 
+Requires=coreos-metadata.service etcd-bootstrap.service
+After=coreos-metadata.service etcd-bootstrap.service
 
 [Service]
 EnvironmentFile=/run/metadata/coreos

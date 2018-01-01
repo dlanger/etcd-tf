@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+
 readonly curl="curl -s"
 readonly jq="jq -r"
 
