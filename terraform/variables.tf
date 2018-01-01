@@ -42,3 +42,8 @@ variable "etcd_node_role_name" {
   type        = "string"
   description = "iam role name for the nodes to use - needs AmazonEC2ReadOnlyAccess (or similar) access"
 }
+
+variable "etcd_node_role_arn" {
+  type = "string"
+  description = "iam role for the nodes to use - needs AmazonEC2ReadOnlyAccess (or similar) access"
+}
