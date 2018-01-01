@@ -41,3 +41,8 @@ variable "network_cidr" {
 variable "etcd_cluster_name" {
   type = "string"
 }
+
+variable "etcd_node_role_name" {
+  type = "string"
+  description = "iam role name for the nodes to use - needs AmazonEC2ReadOnlyAccess (or similar) access"
+}
