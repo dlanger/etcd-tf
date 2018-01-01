@@ -1,0 +1,10 @@
+[Unit]
+Requires=coreos-metadata.service 
+After=coreos-metadata.service 
+
+[Service]
+EnvironmentFile=/run/metadata/coreos
+Type=oneshot
+RemainAfterExit=true
+ExecStart=/opt/etcd-bootstrap
+ExecStop=/usr/bin/bash -c "rm /tmp/etcd-vars"

@@ -1,20 +1,9 @@
 [Unit]
-Requires=coreos-metadata.service 
-After=coreos-metadata.service 
+Requires=coreos-metadata.service etcd-bootstrap.service
+After=coreos-metadata.service etcd-bootstrap.service
 
 [Service]
 EnvironmentFile=/run/metadata/coreos
-
-Environment="ETCD_INITIAL_ADVERTISE_PEER_URLS=http://0.0.0.0:2380"
-Environment="ETCD_INITIAL_CLUSTER_TOKEN=${cluster_name}"
-Environment="ETCD_INITIAL_CLUSTER_STATE=new"
-
-Environment="ETCD_ADVERTISE_CLIENT_URLS=http://0.0.0.0:2379"
-Environment="ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379"
-Environment="ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380"
-Environment="ETCD_STRICT_RECONFIG_CHECK=true"
-#Environment="ETCD_DISCOVERY_SRV="
-
+EnvironmentFile=/tmp/etcd-vars
 ExecStart=
-ExecStart=/usr/bin/env ETCD_NAME=$${COREOS_EC2_AVAILABILITY_ZONE}--$${COREOS_EC2_INSTANCE_ID} \
-			/usr/lib/coreos/etcd-wrapper $ETCD_OPTS
+ExecStart=/usr/lib/coreos/etcd-wrapper $ETCD_OPTS
