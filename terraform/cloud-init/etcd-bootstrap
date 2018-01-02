@@ -2,7 +2,6 @@
 
 set -euo pipefail
 
-readonly curl="curl -s"
 readonly jq="jq -r"
 
 readonly AWSCLI_CONTAINER="xueshanf/awscli"
@@ -11,6 +10,7 @@ readonly REGION=${COREOS_EC2_REGION}
 readonly AVAILABILITY_ZONE=${COREOS_EC2_AVAILABILITY_ZONE}
 readonly INSTANCE_ID=${COREOS_EC2_INSTANCE_ID}
 readonly PRIVATE_IP=${COREOS_EC2_IPV4_LOCAL}
+readonly ETCD_NAME="${AVAILABILITY_ZONE}--${INSTANCE_ID}"
 
 readonly awscli="docker run --rm -e AWS_DEFAULT_REGION=${REGION} ${AWSCLI_CONTAINER} aws"
 
@@ -36,14 +36,24 @@ if [[ "${other_health_instances}" == "" ]]; then
 	echo "ETCD_INITIAL_CLUSTER_STATE=new" >> "${VARS_FILE_PATH}"
 	echo "ETCD_INITIAL_CLUSTER_TOKEN=etcd--$(uuidgen)" >> "${VARS_FILE_PATH}"
 	echo "ETCD_INITIAL_ADVERTISE_PEER_URLS=http://${PRIVATE_IP}:2380" >> "${VARS_FILE_PATH}"
-	
-	echo "ETCD_ADVERTISE_CLIENT_URLS=http://${PRIVATE_IP}:2379" >> "${VARS_FILE_PATH}"
-	echo "ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379" >> "${VARS_FILE_PATH}"
-	echo "ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380" >> "${VARS_FILE_PATH}"
 
 else
 	echo "other ec2-healthy instances found - joining cluster"
+
+	readonly other_instance_id=$(echo "${other_health_instances}" | head -n1)
+	readonly other_instance_state=$(${awscli} ec2 describe-instances  --instance-ids="${other_instance_id}")
+	readonly other_instance_ip=$(echo "${other_instance_state}" | ${jq} ".Reservations[0].Instances[0].PrivateIpAddress")
+
+	readonly add_result=$(etcdctl --peers="http://${other_instance_ip}:2379" member add "${ETCD_NAME}" "http://${PRIVATE_IP}:2380")
+	readonly config_line=$(echo "${add_result}" | grep "ETCD_INITIAL_CLUSTER")
+	
+	echo "ETCD_INITIAL_CLUSTER_STATE=existing" >> "${VARS_FILE_PATH}"
+	echo "${config_line}" >> "${VARS_FILE_PATH}"
+
 fi
 
+echo "ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379" >> "${VARS_FILE_PATH}"
+echo "ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380" >> "${VARS_FILE_PATH}"
+echo "ETCD_ADVERTISE_CLIENT_URLS=http://${PRIVATE_IP}:2379" >> "${VARS_FILE_PATH}"
 echo "ETCD_STRICT_RECONFIG_CHECK=true" >> "${VARS_FILE_PATH}"
-echo "ETCD_NAME=${AVAILABILITY_ZONE}--${INSTANCE_ID}" >> "${VARS_FILE_PATH}"
+echo "ETCD_NAME=${ETCD_NAME}" >> "${VARS_FILE_PATH}"
